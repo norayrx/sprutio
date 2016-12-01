@@ -3,21 +3,24 @@ import traceback
 
 
 class ReadFile(FM.BaseAction):
-    def __init__(self, request, path, **kwargs):
+    def __init__(self, request, path, encoding, **kwargs):
         super(ReadFile, self).__init__(request=request, **kwargs)
 
         self.path = path
+        self.encoding = encoding
 
     def run(self):
         request = self.get_rpc_request()
 
         result = request.request_bytes('home/read_file', login=self.request.get_current_user(),
-                                       password=self.request.get_current_password(), path=self.path)
+                                       password=self.request.get_current_password(), path=self.path,
+                                       encoding=self.encoding)
         answer = self.process_result(result)
 
         if 'data' in answer.keys():
             data = answer['data']
             if 'content' in data.keys() and 'encoding' in data.keys():
+                self.application.logger.info(data['encoding'].decode('utf-8').lower())
                 data['encoding'] = data['encoding'].decode('utf-8').lower()
                 data['content'] = str(data['content'], data['encoding'], 'replace')
                 data['item'] = self.byte_to_unicode_dict(data['item'])
